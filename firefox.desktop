@@ -1,0 +1,61 @@
+[Desktop Entry]
+Version=1.0
+Name=Firefox Web Browser
+Comment=Browse the World Wide Web
+GenericName=Web Browser
+Keywords=Internet;WWW;Browser;Web;Explorer
+Exec=firefox %u
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=firefox
+Categories=GNOME;GTK;Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;application/xml;application/rss+xml;application/rdf+xml;image/gif;image/jpeg;image/png;x-scheme-handler/http;x-scheme-handler/https;x-scheme-handler/ftp;x-scheme-handler/chrome;video/webm;application/x-xpinstall;
+StartupNotify=true
+Actions=bank;google;amazon;otherlogins;nomem;wmem;new-window;new-private-window;profile;facebookhotmail;facebookgoogle;
+
+[Desktop Action bank]
+Name=Banking websites (has memory)
+Exec=firefox --new-instance -P bank 
+
+[Desktop Action google]
+Name=google product login (has memory)
+Exec=firefox --new-instance -P google 
+
+[Desktop Action amazon]
+Name=amazon product login (has memory)
+Exec=firefox --new-instance -P amazon 
+
+[Desktop Action otherlogins]
+Name=logins other than google (has memory)
+Exec=firefox --new-instance -P otherlogins 
+
+[Desktop Action nomem]
+Name=No memory between sessions
+Exec=/usr/local/bin/start_firefox_nomem
+#Exec=firefox --new-instance -P nomem 
+
+[Desktop Action wmem]
+Name=No memory from last time (has memory)
+Exec=firefox --new-instance -P nomem 
+#Exec=/usr/local/bin/start_firefox_nomem
+
+[Desktop Action profile]
+Name=open profile manager
+Exec=firefox -ProfileManager
+
+[Desktop Action new-window]
+Name=Open a New Window
+Exec=firefox -new-window
+
+[Desktop Action new-private-window]
+Name=Open a New Private Window
+Exec=firefox -private-window
+
+[Desktop Action facebookhotmail]
+Name=facebook hotmail (has memory)
+Exec=firefox --new-instance -P facebookhotmail 
+
+[Desktop Action facebookgoogle]
+Name=facebook google (has memory)
+Exec=firefox --new-instance -P facebookgoogle 

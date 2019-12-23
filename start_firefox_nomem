@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+
+import os
+import re
+import shutil
+import time
+
+profiledir = os.path.join(os.environ['HOME'],".mozilla/firefox/")
+backupdir = os.path.join(profiledir,"backup/")
+tokeep = 8
+startprof = "nomem"
+profname = "profile_" + startprof
+profbasename = profname + "_base"
+firefoxcommand = "/usr/bin/firefox --new-instance -P "+startprof
+
+#move profile.bak_1 to profile.bak_2... chain to bak_n
+#move profile to profile.bak
+#if profile.staged is ready (profile.staged.ready is newer than profile.staged)
+#  move staged profile to profile
+#else
+#  copy profile.init to profile
+#spawn copy from profile.init to profile.staged (create .ready when done)
+#                -first remove profile.staged if it exists, it is corrupt
+#spawn delete of profile.bakn (any number greater than # to keep)
+#                -just do in same routine as copy
+#exex firefox
+
+def main():
+   global tokeep, profname, profbasename, firefoxcommand, profiledir
+
+   #make sure backup dir exists
+   if not os.path.isdir(backupdir):
+      os.mkdir(backupdir)
+
+   chain_move()
+   backup1 = make_bakname(1)
+   fullbackup1 = os.path.join(backupdir, backup1)
+   fullpp = os.path.join(profiledir, profname)
+   fullppbase = os.path.join(profiledir, profbasename)
+      #if used directory exists, move it to backup
+   if os.path.isdir(fullpp):
+      os.rename(fullpp, fullbackup1)
+   ns = os.path.join(profiledir, profname+".staged")
+   nr = os.path.join(profiledir, profname+".ready")
+   movevalid = 1
+   if os.path.isdir(ns):
+      ts = os.path.getmtime(ns)
+   else:
+      movevalid = 0
+   if os.path.isfile(nr):
+      tr = os.path.getmtime(nr)
+   else:
+      movevalid = 0
+   if movevalid == 1:
+      if (tr >= ts):
+         os.rename(ns, fullpp)
+   if movevalid == 0:
+      #copy .orig to fullpp
+      shutil.copytree(fullppbase,fullpp)
+   newpid = os.fork()
+   if newpid == 0:
+      create_staged_and_delete_old_profiles()
+   else:
+      #print(firefoxcommand)
+      os.system(firefoxcommand)
+
+
+#return the number at the end for sort
+def bakname_to_num(name):
+   num = name.split('_')[-1]
+   return int(num)
+
+#done in background while firefox starts & runs
+def create_staged_and_delete_old_profiles():
+   ns = os.path.join(profiledir, profname+".staged")
+   nr = os.path.join(profiledir, profname+".ready")
+   fullppbase = os.path.join(profiledir, profbasename)
+   if os.path.isdir(ns):
+      shutil.rmtree(ns)
+   shutil.copytree(fullppbase,ns)  #copy base to staged
+   time.sleep(2)
+   with open(nr, 'a'):
+      os.utime(nr)
+   backfiles = get_bak_file_list()
+   for f in backfiles:
+      num = bakname_to_num(f)
+      if num > tokeep:
+         delpath = os.path.join(backupdir, f)
+         shutil.rmtree(delpath)
+         
+def make_bakname(num):
+   global profname, backupdir
+
+   return(profname + ".bak_" + str(num))
+
+def get_bak_file_list():
+   global backupdir
+
+   rx = re.compile(r'\.bak_[0-9]*$')
+
+   files = os.listdir(backupdir)
+   files1 = filter(rx.search, files)
+   files2 = sorted(files1, key = bakname_to_num, reverse = True)
+   return files2
+
+#chain_move:  move series of numbered backups to make space at head
+#read dir
+#get list of numbers
+#order highest to lowest
+#for each number in list:
+def chain_move():
+   global backupdir
+
+   files = get_bak_file_list()
+   for f in files:
+      n = bakname_to_num(f)
+      n = n + 1
+      newf = make_bakname(n)
+      fullf = os.path.join(backupdir, f)
+      fullnewf = os.path.join(backupdir, newf)
+      os.rename(fullf,fullnewf)
+
+main()
